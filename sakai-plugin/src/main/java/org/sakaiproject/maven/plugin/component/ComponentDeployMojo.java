@@ -27,9 +27,16 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.resolver.AbstractArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
+import org.apache.maven.project.MavenProject;
+import org.apache.maven.project.MavenProjectBuilder;
+import org.apache.maven.project.ProjectBuildingException;
+import org.apache.maven.project.artifact.InvalidDependencyVersionException;
 import org.codehaus.plexus.archiver.manager.NoSuchArchiverException;
 
 /**
@@ -61,8 +68,13 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 	 * @parameter expression="${project.artifactId}"
 	 * @required
 	 */
-	private String deployId = null;
-
+	
+	/** @component */
+	private MavenProjectBuilder mavenProjectBuilder;
+	
+	/** @component */
+	private ArtifactMetadataSource metadataSource;
+	
 	private Properties locationMap;
 
 	private static Properties defaultLocatioMap;
@@ -95,21 +107,16 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 		this.appServer = appServer;
 	}
 	
-	public String getDeployId()
+	public String getDeployId(MavenProject project)
 	{
-		return deployId;
-	}
-
-	public void setDeployId(String deployId)
-	{
-		this.deployId = deployId;
+		return project.getProperties().getProperty("deployId", project.getArtifactId());
 	}
 
 	public void execute() throws MojoExecutionException, MojoFailureException {
-		deployToContainer();
+		deployToContainer(project);
 	}
 
-	public void deployToContainer() throws MojoExecutionException,
+	public void deployToContainer(MavenProject project) throws MojoExecutionException,
 			MojoFailureException
 
 	{
@@ -198,7 +205,7 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 								+ project.getArtifactId() + ":"
 								+ project.getPackaging() + " as a webapp");
 				deployProjectArtifact(new File(deployDir,  getDeploySubDir("webapps")), false,
-						true);
+						true, project);
 
 			} else if ("jar".equals(packaging)) {
 				// UseCase: jar, marked with a property
@@ -207,13 +214,13 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 				String deployTarget = p.getProperty("deploy.target");
 				if ("shared".equals(deployTarget)) {
 					deployProjectArtifact(new File(deployDir, getDeploySubDir("shared/lib")),
-							true, false);
+							true, false, project);
 				} else if ("common".equals(deployTarget)) {
 					deployProjectArtifact(new File(deployDir, getDeploySubDir("common/lib")),
-							true, false);
+							true, false, project);
 				} else if ("server".equals(deployTarget)) {
 					deployProjectArtifact(new File(deployDir, getDeploySubDir("server/lib")),
-							true, false);
+							true, false, project);
 				} else {
 					getLog().info(
 							"No deployment specification -- skipping "
@@ -246,6 +253,22 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 				        }
 				        deployDir.mkdirs();
 				        deployOverlay(artifacts, deployDir);
+				        
+				} else if ("distro".equals(deployTarget)) {
+					// Big deploy of all artifacts....
+					for (Artifact artifact: (Set<Artifact>)artifacts) {
+						try {
+							MavenProject dependentProject = mavenProjectBuilder.buildFromRepository(artifact,
+									remoteRepositories, artifactRepository);
+							dependentProject.setDependencyArtifacts(dependentProject.createArtifacts(artifactFactory, null, null));
+							deployToContainer(dependentProject);
+						} catch (ProjectBuildingException e) {
+							throw new MojoFailureException("Failed to build project for :"+ artifact.getId());
+						} catch (InvalidDependencyVersionException e) {
+							throw new MojoFailureException("Failed to find depdendencies for: "+ artifact.getId());
+						}
+					}
+					
 				} else {
 					getLog().info(
 							"No deployment specification -- skipping "
@@ -346,64 +369,64 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 		}
 
 	}
-        protected void deployArtifacts(Set artifacts, File destination)
-        throws IOException, MojoFailureException,
-        AbstractArtifactResolutionException {
-for (Iterator iter = artifacts.iterator(); iter.hasNext();) {
-        Artifact artifact = (Artifact) iter.next();
-        if (artifact == null) {
-                getLog().error(
-                                "Null Artifact found, sould never happen, in artifacts for project "
-                                                + getProjectId());
-                throw new MojoFailureException(
-                                "Null Artifact found, sould never happen, in artifacts for project ");
-        }
-        File artifactFile = artifact.getFile();
-        if (artifactFile == null) {
-                artifactResolver.resolve(artifact, remoteRepositories,
-                                artifactRepository);
-                artifactFile = artifact.getFile();
-        }
-        if (artifactFile == null) {
-                getLog().error(
-                                "Artifact File is null for dependency "
-                                                + artifact.getId() + " in " + getProjectId());
-                throw new MojoFailureException(
-                                "Artifact File is null for dependency "
-                                                + artifact.getId() + " in " + getProjectId());
-        }
-        String targetFileName = getDefaultFinalName(artifact);
+	protected void deployArtifacts(Set artifacts, File destination)
+	throws IOException, MojoFailureException,
+	AbstractArtifactResolutionException {
+		for (Iterator iter = artifacts.iterator(); iter.hasNext();) {
+			Artifact artifact = (Artifact) iter.next();
+			if (artifact == null) {
+				getLog().error(
+						"Null Artifact found, sould never happen, in artifacts for project "
+						+ getProjectId());
+				throw new MojoFailureException(
+				"Null Artifact found, sould never happen, in artifacts for project ");
+			}
+			File artifactFile = artifact.getFile();
+			if (artifactFile == null) {
+				artifactResolver.resolve(artifact, remoteRepositories,
+						artifactRepository);
+				artifactFile = artifact.getFile();
+			}
+			if (artifactFile == null) {
+				getLog().error(
+						"Artifact File is null for dependency "
+						+ artifact.getId() + " in " + getProjectId());
+				throw new MojoFailureException(
+						"Artifact File is null for dependency "
+						+ artifact.getId() + " in " + getProjectId());
+			}
+			String targetFileName = getDefaultFinalName(artifact);
 
-        getLog().debug("Processing: " + targetFileName);
-        File destinationFile = new File(destination, targetFileName);
-        if ("provided".equals(artifact.getScope())
-                        || "test".equals(artifact.getScope())) {
-                getLog().info(
-                                "Skipping " + artifactFile + " Scope "
-                                                + artifact.getScope());
+			getLog().debug("Processing: " + targetFileName);
+			File destinationFile = new File(destination, targetFileName);
+			if ("provided".equals(artifact.getScope())
+					|| "test".equals(artifact.getScope())) {
+				getLog().info(
+						"Skipping " + artifactFile + " Scope "
+						+ artifact.getScope());
 
-        } else {
-                getLog()
-                                .info("Copy " + artifactFile + " to " + destinationFile);
-                copyFileIfModified(artifact.getFile(), destinationFile);
-        }
-}
+			} else {
+				getLog()
+				.info("Copy " + artifactFile + " to " + destinationFile);
+				copyFileIfModified(artifact.getFile(), destinationFile);
+			}
+		}
 
-}
+	}
 
 	private void deployProjectArtifact(File destination, boolean withVersion,
-			boolean deleteStub) throws MojoFailureException, IOException,
+			boolean deleteStub, MavenProject project) throws MojoFailureException, IOException,
 			AbstractArtifactResolutionException {
 		Artifact artifact = project.getArtifact();
 		String fileName = null;
 		String stubName = null;
 		if (withVersion) {
-			fileName = getDeployId() + "-" + project.getVersion()
+			fileName = getDeployId(project) + "-" + project.getVersion()
 					+ "." + project.getPackaging();
-			stubName = getDeployId() + "-" + project.getVersion();
+			stubName = getDeployId(project) + "-" + project.getVersion();
 		} else {
-			fileName = getDeployId() + "." + project.getPackaging();
-			stubName = getDeployId();
+			fileName = getDeployId(project) + "." + project.getPackaging();
+			stubName = getDeployId(project);
 		}
 		File destinationFile = new File(destination, fileName);
 		File stubFile = new File(destination, stubName);
