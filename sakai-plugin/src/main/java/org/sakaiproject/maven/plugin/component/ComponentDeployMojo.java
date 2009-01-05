@@ -50,7 +50,7 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 	/**
 	 * The directory where the webapp is built.
 	 * 
-	 * @parameter expression="${maven.tomcat.home}/components/${project.build.finalName}"
+	 * @parameter expression="${maven.tomcat.home}"
 	 * @required
 	 */
 	private File deployDirectory;
