@@ -425,12 +425,11 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 		String fileName = null;
 		String stubName = null;
 		if (withVersion) {
-			fileName = getDeployId(project) + "-" + project.getVersion()
-					+ "." + project.getPackaging();
 			stubName = getDeployId(project) + "-" + project.getVersion();
+			fileName = stubName+ "." + project.getPackaging();
 		} else {
-			fileName = getDeployId(project) + "." + project.getPackaging();
 			stubName = getDeployId(project);
+			fileName = stubName+ "." + project.getPackaging();
 		}
 		File destinationFile = new File(destination, fileName);
 		File stubFile = new File(destination, stubName);
