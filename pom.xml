@@ -6,27 +6,25 @@
   <version>1.5.ox1-SNAPSHOT</version>
   <packaging>pom</packaging>
   <scm>
-    <connection>scm:git:ssh://flounder.oucs.ox.ac.uk/~git/repos/local-version/sakai/maven2.git</connection>
-    <developerConnection>scm:git:ssh://flounder.oucs.ox.ac.uk/~git/repos/local-version/sakai/maven2.git</developerConnection>
+    <connection>scm:git:ssh://git-repo.oucs.ox.ac.uk/~git/repos/local-version/sakai/maven2.git</connection>
+    <developerConnection>scm:git:ssh://git-repo.oucs.ox.ac.uk/~git/repos/local-version/sakai/maven2.git</developerConnection>
     <url />
   </scm>
-  <repositories>
-    <repository>
-      <id>oucs-vle</id>
-      <name>OUCS VLE Repository</name>
-      <url>http://archiva.oucs.ox.ac.uk/archiva/repository/internal/</url>
-      <layout>default</layout>
-    </repository>
-  </repositories>
-
   <distributionManagement>
     <repository>
-      <uniqueVersion>false</uniqueVersion>
-      <id>oucs-vle</id>
+      <id>maven-repo.oucs</id>
       <name>OUCS VLE Repository</name>
-      <url>http://archiva.oucs.ox.ac.uk/archiva/repository/internal/</url>
+      <url>http://maven-repo.oucs.ox.ac.uk/content/repositories/releases/</url>
       <layout>default</layout>
+      <uniqueVersion>false</uniqueVersion>
     </repository>
+    <snapshotRepository>
+      <id>maven-repo.oucs</id>
+      <name>OUCS VLE Repository</name>
+      <url>http://maven-repo.oucs.ox.ac.uk/content/repositories/snapshots/</url>
+      <layout>default</layout>
+      <uniqueVersion>false</uniqueVersion>
+    </snapshotRepository>
   </distributionManagement>
 
  <modules>
