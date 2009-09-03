@@ -3,7 +3,7 @@
   <name>Sakai Maven</name>
   <groupId>org.sakaiproject.maven</groupId>
   <artifactId>plugins</artifactId>
-  <version>1.6.ox1-SNAPSHOT</version>
+  <version>1.6.ox1</version>
   <packaging>pom</packaging>
   <scm>
     <connection>scm:git:ssh://git-repo.oucs.ox.ac.uk/~git/repos/local-version/sakai/maven2.git</connection>
