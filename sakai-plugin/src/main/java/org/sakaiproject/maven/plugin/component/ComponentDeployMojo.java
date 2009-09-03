@@ -110,7 +110,7 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 	public String getDeployId(MavenProject project)
 	{
 		String deployId = project.getBuild().getFinalName();
-		if (deployId == null || deployId.length() == 0) {
+		if (deployId == null || deployId.equals(project.getArtifactId()+ "-"+ project.getVersion())) {
 			deployId = project.getProperties().getProperty("deployId", project.getArtifactId());
 		}
 		return deployId;
