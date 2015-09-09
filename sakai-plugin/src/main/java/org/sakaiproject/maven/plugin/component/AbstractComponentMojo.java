@@ -218,6 +218,12 @@ public abstract class AbstractComponentMojo extends AbstractMojo {
 	private String dependentWarExcludes;
 
 	/**
+	 * Should this plugin be skipped?
+	 * @parameter
+	 */
+	private boolean skip = false;
+
+	/**
 	 * The maven archive configuration to use.
 	 * 
 	 * @parameter
@@ -274,6 +280,13 @@ public abstract class AbstractComponentMojo extends AbstractMojo {
 		this.containerConfigXML = containerConfigXML;
 	}
 
+	public boolean isSkip() {
+		return skip;
+	}
+
+	public void setSkip(boolean skip) {
+		this.skip = skip;
+	}
 
 	/**
 	 * Returns a string array of the excludes to be used when assembling/copying
@@ -1063,5 +1076,18 @@ public abstract class AbstractComponentMojo extends AbstractMojo {
 				+ artifact.getArtifactHandler().getExtension();
 		return finalName;
 	}
+
+	public final void execute() throws MojoExecutionException, MojoFailureException {
+		if (skip) {
+			getLog().info("Skipped plugin");
+		} else {
+			doExecute();
+		}
+	}
+
+	/**
+	 * The actual execute method as we support skip centrally.
+	 */
+	public abstract void doExecute() throws MojoExecutionException, MojoFailureException;
 
 }

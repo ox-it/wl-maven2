@@ -58,7 +58,7 @@ public class ComponentManifestMojo
      *
      * @throws MojoExecutionException if an error occured while building the webapp
      */
-    public void execute()
+    public void doExecute()
         throws MojoExecutionException
     {
         File manifestDir = new File( getWarSourceDirectory(), "META-INF" );

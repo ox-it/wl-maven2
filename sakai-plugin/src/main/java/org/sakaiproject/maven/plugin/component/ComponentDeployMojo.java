@@ -117,7 +117,7 @@ public class ComponentDeployMojo extends AbstractComponentMojo {
 		return deployId;
 	}
 
-	public void execute() throws MojoExecutionException, MojoFailureException {
+	public void doExecute() throws MojoExecutionException, MojoFailureException {
 		deployToContainer(project);
 	}
 

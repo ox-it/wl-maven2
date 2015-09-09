@@ -31,7 +31,7 @@ import org.apache.maven.plugin.MojoFailureException;
 public class ComponentInPlaceMojo
     extends AbstractComponentMojo
 {
-    public void execute()
+    public void doExecute()
         throws MojoExecutionException, MojoFailureException
     {
         getLog().info( "Generating webapp in source directory... " + getWarSourceDirectory() );

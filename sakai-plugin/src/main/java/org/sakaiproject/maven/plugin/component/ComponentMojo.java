@@ -120,7 +120,7 @@ public class ComponentMojo
      *
      * @throws MojoExecutionException if an error occured while building the webapp
      */
-    public void execute()
+    public void doExecute()
         throws MojoExecutionException, MojoFailureException
     {
         File warFile = getWarFile( new File( outputDirectory ), warName, classifier );
